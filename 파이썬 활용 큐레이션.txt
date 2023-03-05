@@ -1,0 +1,55 @@
+usercode | moviecode | count
+
+select usercode, moviecode, count(*) as count from ugotfilm_movie_choice group by usercode, moviecode order by usercode;
+
+결론 : 로그인한 유저(A)를 기준으로 상관관계가 높은 유저(B)와 비교하여 A가 아직 보지 못한 B가 본 영화 리스트를 보여준다
+
+필요한 결과  moviecode
+
+
+
+프론트에서 유저코드 백으로 전송 -> 백에서 usercode 파이썬으로 전송 -> 데이터 자동 처리 -> 결과값을 리턴(moviecode list) -> 백에서 코드 리스트를 받아 List<movieDTO> map 프론트로 전송 -> 뷰
+
+
+choice.controller.java
+
+public Map<MovieDTO> pythonCuration(UserDTO user){
+	usercode = user.getUsercode;
+
+	String[] command = new String[4];
+	        command[0] = "python";
+	        command[1] = "파이썬 경로/python_curation.py";
+	        command[2] = usercode;
+
+
+	 list<integer> result =  execPython(command);
+	
+	 Map<MovieDTO> map = [];
+	for(int i=0; i< result.size ; i++){
+		map.put(getmovie(result[i]));
+	}	
+	return map;
+}
+
+    public List<integer> execPython(String[] command) throws IOException, InterruptedException {
+        CommandLine commandLine = CommandLine.parse(command[0]);
+        for (int i = 1, n = command.length; i < n; i++) {
+            commandLine.addArgument(command[i]);
+        }
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PumpStreamHandler pumpStreamHandler = new PumpStreamHandler(outputStream);
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setStreamHandler(pumpStreamHandler);
+        List<integer> result = executor.execute(commandLine);
+        System.out.println("result: " + result);
+        System.out.println("output: " + outputStream.toString());
+	return result;
+    }  
+
+
+public List<movieDTO> getmovie(moviecode){
+	service.getmovie(moviecode)
+}
+
+select * from ugotfilm_movie where moviecode={moviecode};
